@@ -2,7 +2,7 @@ use teloxide::{prelude::*, utils::command::BotCommand};
 use std::error::Error;
 mod liuliget;
 
-#[derive(BotCommand)]
+#[derive(BotCommand, Debug, PartialEq)]
 #[command(rename = "lowercase", description = "支持的命令清单有:")]
 enum Command {
     #[command(description = "查看帮助")]
@@ -35,9 +35,17 @@ async fn main() {
     log::info!("Starting dices_bot...");
 
     let bot = Bot::from_env().auto_send();
-    let bot_name: String = String::from("alan-test");
+    let bot_name: String = String::from("alan_dev_dev");
     let mut liuliget = liuliget::Liuliget::new();
     liuliget.start();
+    // TODO: https://github.com/teloxide/teloxide/pull/498
+    bot.set_my_commands(vec![
+        teloxide::types::BotCommand::new("help", "查看帮助"),
+        teloxide::types::BotCommand::new("start", "开启定时监测"),
+        teloxide::types::BotCommand::new("stop", "停止定时监测"),
+        teloxide::types::BotCommand::new("refresh", "获取第一页的内容"),
+        teloxide::types::BotCommand::new("active", "获取当前监测状态"),
+    ]).send().await.expect("commands set error");
     teloxide::commands_repl(bot, bot_name, answer).await;
 }
 
