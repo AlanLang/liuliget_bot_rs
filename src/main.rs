@@ -1,5 +1,7 @@
+use teloxide::payloads::SendPhotoSetters;
 use teloxide::{prelude2::*, utils::command::BotCommand};
 use teloxide::types::InputFile;
+use tokio::time;
 use std::error::Error;
 use reqwest::Url;
 mod liuliget;
@@ -11,6 +13,40 @@ enum Command {
     Help,
     #[command(description = "开始使用")]
     Start,
+}
+
+async fn bot_send_post(bot: &AutoSend<Bot>, chat_id: i64, post: &liuliget::Post) -> Result<(), Box<dyn Error + Send + Sync>> {
+    let mut post_message: String = "".to_owned();
+    post_message.push_str(&post.title);
+    post_message.push_str(&post.description);
+    post_message.push_str(&post.post_type.trim());
+    let _ = bot.send_photo(chat_id, InputFile::url(Url::parse(&post.img)?))
+        .caption(post_message)
+        .send().await?;
+    Ok(())
+}
+
+async fn timer_to_send(bot: AutoSend<Bot>, chat_id: i64) {
+    let mut interval = time::interval(time::Duration::from_secs(10 * 60 * 60));
+    let mut post_url: String = String::new();
+    loop {
+        interval.tick().await;
+        let posts = match liuliget::Liuliget::get_page().await {
+            Ok(p) => p,
+            Err(error) => panic!("Problem opening the file: {:?}", error),
+        };
+        let post = posts.first();
+        match post {
+            Some(x) => {
+                if post_url != x.url {
+                    let _ = bot_send_post(&bot, chat_id, x);
+                    post_url =  x.url.to_string();
+                }
+            },
+            None    => println!("Cannot divide by 0"),
+        }
+
+    }
 }
 
 async fn answer(
@@ -29,17 +65,15 @@ async fn answer(
                 Err(error) => panic!("Problem opening the file: {:?}", error),
             };
             for post in &posts {
-                println!("{}", &post.title);
-                println!("{}", &post.img);
-                bot.send_photo(message.chat.id, InputFile::url(Url::parse(&post.img)?)).await?;
+                let mut post_message: String = "".to_owned();
+                post_message.push_str(&post.title);
+                post_message.push_str(&post.description);
+                post_message.push_str(&post.post_type.trim());
+                bot.send_photo(message.chat.id, InputFile::url(Url::parse(&post.img)?))
+                    .caption(post_message)
+                    .send().await?;
             }
             bot.send_message(message.chat.id,"finish").await?
-            // // let posts = liuliget::Liuliget::get_page().await;
-            // if let Ok(post) = liuliget::Liuliget::get_page().await {
-            //     bot.send_message(message.chat.id,"success").await?
-            // } else {
-            //     bot.send_message(message.chat.id,"获取异常").await?
-            // }
         }
     };
 
@@ -57,6 +91,6 @@ async fn main() {
         teloxide::types::BotCommand::new("help", "查看帮助"),
         teloxide::types::BotCommand::new("start", "开始使用"),
     ]).send().await.expect("commands set error");
-
-    teloxide::repls2::commands_repl(bot, answer, Command::ty()).await;
+    tokio::spawn(timer_to_send(bot,817392195));
+    // teloxide::repls2::commands_repl(bot, answer, Command::ty()).await;
 }
