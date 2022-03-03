@@ -1,4 +1,5 @@
 use nipper::Document;
+use regex::Regex;
 
 #[derive(Debug)]
 pub struct Liuliget {
@@ -36,5 +37,37 @@ impl Liuliget {
             }
         });
         Ok(posts)
+    }
+
+    pub async fn get_download(url: &String) -> Result<String, Box<dyn std::error::Error>> {
+        let res = reqwest::get(url).await?.text().await?;
+        let document = Document::from(res.as_str());
+        let dom = document.select(".entry-content").text();
+        let re = Regex::new(r"[0-9a-fA-F]{40,}.*").unwrap();
+        let a:Vec<&str> = re.find_iter(&dom).map(|mat| mat.as_str()).collect();
+        for text in &a {
+            let mut owned_string: String = "magnet:?xt=urn:btih ".to_owned();
+            owned_string.push_str(text);
+            return Ok(owned_string);
+        }
+        Ok(url.to_string())
+    }
+}
+
+
+#[cfg(test)]
+mod tests {
+    // 注意这个惯用法：在 tests 模块中，从外部作用域导入所有名字。
+    use super::*;
+
+    #[test]
+    fn test_add() {
+        let re = Regex::new(r"[0-9a-fA-F]{40,}.*").unwrap();
+        let alan = "magnet:?xt=urn:btih:d6f248d7aed5566fa3ded6c7fd8112ef8570e8e5";
+        let a:Vec<&str> = re.find_iter(&alan).map(|mat| mat.as_str()).collect();
+        for text in &a {
+            println!("{}", text);
+        }
+        assert_eq!(re.is_match(alan.trim()), true);
     }
 }

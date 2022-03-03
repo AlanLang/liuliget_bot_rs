@@ -711,6 +711,7 @@ dependencies = [
  "log",
  "nipper",
  "pretty_env_logger",
+ "regex",
  "reqwest",
  "teloxide",
  "tokio",
