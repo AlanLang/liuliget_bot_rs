@@ -1,4 +1,5 @@
 ## liuliget-bot-rs
+[![build](https://github.com/AlanLang/liuliget_bot_rs/actions/workflows/build.yml/badge.svg?branch=main)](https://github.com/AlanLang/liuliget_bot_rs/actions/workflows/build.yml)
 基于 rust 编写的 telegram bot，用于获取琉璃神社的新增文章。
 
 ### 使用
