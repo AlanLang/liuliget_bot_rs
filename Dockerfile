@@ -1,8 +1,8 @@
 FROM rust:1.56.1 as builder
 WORKDIR /usr/src/myapp
 COPY . .
-RUN cargo build --release
+RUN cargo build --release --target x86_64-unknown-linux-gnu
 
-FROM scratch
-COPY --from=builder /usr/src/myapp/target/release/liuliget_bot /usr/local/bin/liuliget_bot
+FROM gcr.io/distroless/cc
+COPY --from=builder /usr/src/myapp/target/x86_64-unknown-linux-gnu/release/liuliget_bot /usr/local/bin/liuliget_bot
 CMD ["liuliget_bot"]
