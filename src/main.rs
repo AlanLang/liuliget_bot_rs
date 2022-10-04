@@ -21,6 +21,7 @@ async fn bot_send_post(bot: &AutoSend<Bot>, chat_id: ChatId, post: &post::Post) 
     post_message.push_str(&download_url);
     let url = Url::parse(&post.img).unwrap();
     let photo = InputFile::url(url);
+    log::info!("发送文章给:{}, 标题为:{}", chat_id, post.title);
     let _ = bot.send_photo(chat_id, photo)
         .caption(post_message)
         .send().await?;
