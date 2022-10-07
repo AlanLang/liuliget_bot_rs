@@ -1,4 +1,4 @@
-FROM rust:1.56.1 as builder
+FROM rust:1.64.0 as builder
 WORKDIR /usr/src/myapp
 COPY . .
 RUN cargo build --release --target x86_64-unknown-linux-gnu
