@@ -38,15 +38,17 @@ async fn timer_to_send(bot: AutoSend<Bot>, chat_id: ChatId) {
             Err(error) => panic!("Problem opening the file: {:?}", error),
         };
         let post = posts.first();
+        log::info!("文章标题：{}", post.unwrap().title);
         match post {
             Some(x) => {
                 if post_url != x.url {
                     let _ = bot_send_post(&bot, chat_id, x).await;
-                    post_url =  x.url.to_string();
-                    println!("send success");
+                    post_url =  x.url.to_string(); 
+                } else {
+                    log::info!("文章[{}]已经发送过了，不再发送", x.title);
                 }
             },
-            None    => println!("Cannot divide by 0"),
+            None    => log::info!("Cannot divide by 0"),
         }
 
     }
@@ -54,8 +56,7 @@ async fn timer_to_send(bot: AutoSend<Bot>, chat_id: ChatId) {
 
 #[tokio::main]
 async fn main() {
-    log::info!("Starting simple_commands_bot...");
-
+    env_logger::init();
     let bot = Bot::from_env().auto_send();
     // let chats: Vec<ChatId> = Vec::new();
     teloxide::commands_repl(bot, answer, command::Command::ty()).await;
@@ -68,7 +69,7 @@ async fn answer(
 ) -> Result<(), Box<dyn Error + Send + Sync>> {
     match command {
         Command::Start => {
-            bot.send_message(message.chat.id, "开始订阅").await?;
+            bot.send_message(message.chat.id, "订阅成功").await?;
             tokio::spawn(timer_to_send(bot,message.chat.id));
         }
     };

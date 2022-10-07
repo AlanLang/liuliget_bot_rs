@@ -9,6 +9,6 @@ regex = "1"
 reqwest = { version = "0.11", features = ["json"] }
 teloxide = { version = "0.10.1", features = ["macros", "auto-send"] }
 log = "0.4"
-pretty_env_logger = "0.4.0"
 tokio = { version =  "1.8", features = ["rt-multi-thread", "macros"] }
 nipper = "0.1.9"
+env_logger = "0.9.0"
