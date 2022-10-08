@@ -15,7 +15,10 @@ async fn bot_send_post(bot: &AutoSend<Bot>, chat_id: ChatId, post: &post::Post) 
 
     let download_url = match post::get_download(&post.url).await {
         Ok(p) => p,
-        Err(error) => panic!("获取下载地址失败: {:?}", error),
+        Err(error) => {
+            log::error!("获取下载地址失败: {:?}", error);
+            String::from("下载地址获取失败")
+        },
     };
     post_message.push_str("\n");
     post_message.push_str(&download_url);
@@ -35,7 +38,10 @@ async fn timer_to_send(bot: AutoSend<Bot>, chat_id: ChatId) {
         interval.tick().await;
         let posts = match post::get_page().await {
             Ok(p) => p,
-            Err(error) => panic!("Problem opening the file: {:?}", error),
+            Err(error) => {
+                log::info!("获取页面信息失败: {:?}", error);
+                Vec::new()
+            }
         };
         let post = posts.first();
         log::info!("文章标题：{}", post.unwrap().title);
