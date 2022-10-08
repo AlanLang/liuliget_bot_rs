@@ -5,6 +5,7 @@ use std::error::Error;
 use reqwest::Url;
 use lib::post;
 use lib::command::{self, Command};
+
 use teloxide::utils::command::BotCommands;
 
 async fn bot_send_post(bot: &AutoSend<Bot>, chat_id: ChatId, post: &post::Post) -> Result<(), Box<dyn Error + Send + Sync>> {
