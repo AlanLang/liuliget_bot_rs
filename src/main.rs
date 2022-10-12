@@ -1,61 +1,30 @@
-use teloxide::{prelude::*};
-use teloxide::types::InputFile;
-use tokio::time;
-use std::error::Error;
-use reqwest::Url;
+use std::{env};
 use lib::post;
-use lib::command::{self, Command};
+use lib::bot;
+use tokio::time;
 
-use teloxide::utils::command::BotCommands;
-
-async fn bot_send_post(bot: &AutoSend<Bot>, chat_id: ChatId, post: &post::Post) -> Result<(), Box<dyn Error + Send + Sync>> {
-    let mut post_message: String = "".to_owned();
-    post_message.push_str(&post.title);
-    post_message.push_str(&post.description);
-    post_message.push_str(&post.post_type.trim());
-
-    let download_url = match post::get_download(&post.url).await {
-        Ok(p) => p,
-        Err(error) => {
-            log::error!("获取下载地址失败: {:?}", error);
-            String::from("下载地址获取失败")
-        },
-    };
-    post_message.push_str("\n");
-    post_message.push_str(&download_url);
-    let url = Url::parse(&post.img).unwrap();
-    let photo = InputFile::url(url);
-    log::info!("发送文章给:{}, 标题为:{}", chat_id, post.title);
-    let _ = bot.send_photo(chat_id, photo)
-        .caption(post_message)
-        .send().await?;
-    Ok(())
-}
-
-async fn timer_to_send(bot: AutoSend<Bot>, chat_id: ChatId) {
-    let mut interval = time::interval(time::Duration::from_secs(5 * 60));
+async fn timer_to_send(bot: &bot::Bot) {
+    let mut interval = time::interval(time::Duration::from_secs(30 * 60));
     let mut post_url: String = String::new();
     loop {
         interval.tick().await;
         let posts = match post::get_page().await {
             Ok(p) => p,
             Err(error) => {
-                log::info!("获取页面信息失败: {:?}", error);
+                log::error!("获取页面信息失败: {:?}", error);
                 Vec::new()
             }
         };
         let post = posts.first();
-        log::info!("文章标题：{}", post.unwrap().title);
         match post {
             Some(x) => {
                 if post_url != x.url {
-                    let _ = bot_send_post(&bot, chat_id, x).await;
+                    log::info!("准备发送文章：{}", x.title);
+                    let _ = bot.send_post(x).await; // TODO 处理错误
                     post_url =  x.url.to_string(); 
-                } else {
-                    log::info!("文章[{}]已经发送过了，不再发送", x.title);
                 }
             },
-            None    => log::info!("Cannot divide by 0"),
+            None    => log::error!("文章解析失败"),
         }
 
     }
@@ -63,23 +32,16 @@ async fn timer_to_send(bot: AutoSend<Bot>, chat_id: ChatId) {
 
 #[tokio::main]
 async fn main() {
-    env_logger::init();
-    let bot = Bot::from_env().auto_send();
-    // let chats: Vec<ChatId> = Vec::new();
-    teloxide::commands_repl(bot, answer, command::Command::ty()).await;
-}
-
-async fn answer(
-    bot: AutoSend<Bot>,
-    message: Message,
-    command: Command,
-) -> Result<(), Box<dyn Error + Send + Sync>> {
-    match command {
-        Command::Start => {
-            bot.send_message(message.chat.id, "订阅成功").await?;
-            tokio::spawn(timer_to_send(bot,message.chat.id));
-        }
+    let bot_token = match env::var("TELEGRAM_BOT_TOKEN") {
+        Ok(val) => val,
+        Err(_) => panic!("TELEGRAM_BOT_TOKEN not set"),
+    };
+    let chart_id = match env::var("TELEGRAM_CHAT_ID") {
+        Ok(val) => val,
+        Err(_) => panic!("TELEGRAM_CHAT_ID not set"),
     };
 
-    Ok(())
+    env_logger::init();
+    let bot = bot::new(bot_token, chart_id);
+    timer_to_send(&bot).await;
 }

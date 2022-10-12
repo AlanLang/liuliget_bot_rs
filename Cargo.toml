@@ -11,7 +11,6 @@ path = "src/lib.rs"
 [dependencies]
 regex = "1.5.5"
 reqwest = { version = "0.11", features = ["json"] }
-teloxide = { version = "0.10.1", features = ["macros", "auto-send"] }
 log = "0.4"
 tokio = { version =  "1.8", features = ["rt-multi-thread", "macros"] }
 nipper = "0.1.9"
