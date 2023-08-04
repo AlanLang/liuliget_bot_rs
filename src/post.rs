@@ -1,5 +1,6 @@
 use nipper::Document;
 use regex::Regex;
+use std::env;
 
 #[derive(Debug)]
 pub struct Post {
@@ -11,10 +12,11 @@ pub struct Post {
 }
 
 pub async fn get_page() -> Result<Vec<Post>, Box<dyn std::error::Error>> {
-    let res = reqwest::get("https://www.hacg.cat/wp/")
-        .await?
-        .text()
-        .await?;
+    let url = match env::var("URL") {
+        Ok(val) => val,
+        Err(_) => "https://www.hacg.sbs/wp/".to_string(),
+    };
+    let res = reqwest::get(url).await?.text().await?;
     let document = Document::from(res.as_str());
     let mut posts: Vec<Post> = Vec::new();
     document

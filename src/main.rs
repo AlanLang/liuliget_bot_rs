@@ -1,6 +1,6 @@
-use std::{env};
-use lib::post;
 use lib::bot;
+use lib::post;
+use std::env;
 use tokio::time;
 
 async fn timer_to_send(bot: &bot::Bot) {
@@ -21,12 +21,11 @@ async fn timer_to_send(bot: &bot::Bot) {
                 if post_url != x.url {
                     log::info!("准备发送文章：{}", x.title);
                     let _ = bot.send_post(x).await; // TODO 处理错误
-                    post_url =  x.url.to_string(); 
+                    post_url = x.url.to_string();
                 }
-            },
-            None    => log::error!("文章解析失败"),
+            }
+            None => log::error!("文章解析失败"),
         }
-
     }
 }
 
