@@ -12,6 +12,9 @@ async fn timer_to_send(bot: &bot::Bot) {
             Ok(p) => p,
             Err(error) => {
                 log::error!("获取页面信息失败: {:?}", error);
+                let _ = bot
+                    .send_message(format!("获取页面信息失败：{}", error).as_str())
+                    .await;
                 Vec::new()
             }
         };
@@ -31,6 +34,7 @@ async fn timer_to_send(bot: &bot::Bot) {
 
 #[tokio::main]
 async fn main() {
+    dotenv::dotenv().ok();
     let bot_token = match env::var("TELEGRAM_BOT_TOKEN") {
         Ok(val) => val,
         Err(_) => panic!("TELEGRAM_BOT_TOKEN not set"),
@@ -42,5 +46,6 @@ async fn main() {
 
     env_logger::init();
     let bot = bot::new(bot_token, chart_id);
+    let _ = bot.send_message("liuliget bot start").await;
     timer_to_send(&bot).await;
 }
